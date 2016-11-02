@@ -6,18 +6,11 @@
     <link/>
     <pubDate>2016-11-02</pubDate>
     <item>
-      <title>Aptly and Swift</title>
-      <link>/pages/aptly-and-swift</link>
-      <pubDate>2015-06-18</pubDate>
-      <description>&lt;p&gt;Hello World&lt;/p&gt;
-</description>
-    </item>
-    <item>
-      <title>Newpage</title>
-      <link>/pages/newpage</link>
-      <description>&lt;h1 id="toc_0"&gt;This is a new page&lt;/h1&gt;
+      <title>Test</title>
+      <link>/pages/test</link>
+      <description>&lt;h1 id="toc_0"&gt;This is a test&lt;/h1&gt;
 
-&lt;p&gt;Hopefully this shows up.&lt;/p&gt;
+&lt;p&gt;Only a test&lt;/p&gt;
 </description>
     </item>
   </channel>
