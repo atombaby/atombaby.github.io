@@ -13,5 +13,150 @@
 &lt;p&gt;Does this change the index?&lt;/p&gt;
 </description>
     </item>
+    <item>
+      <title>Python_groupby_consecutive_ints</title>
+      <link>/python_groupby_consecutive_ints</link>
+      <description>&lt;h1 id="toc_0"&gt;Python groupby and Detecting Consecutive Integers&lt;/h1&gt;
+
+&lt;p&gt;I recently had a need to detect consecutive integers in a longer list so that I would be collapse the list into something consumable as a Slurm job array requests.  Basically:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;1 3 5 6 7 8 12
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;to&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;1 3 5-8 12
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;A quick Google search pointed over to
+&lt;a href="http://stackoverflow.com/a/2361991/1653263"&gt;this&lt;/a&gt; answer on stackoverflow
+pointing to the &lt;a href="https://docs.python.org/2.6/library/itertools.html#examples"&gt;Python
+docs&lt;/a&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;gt;&amp;gt;&amp;gt; from itertools import groupby
+&amp;gt;&amp;gt;&amp;gt; from operator import itemgetter
+&amp;gt;&amp;gt;&amp;gt; data = [ 1, 4,5,6, 10, 15,16,17,18, 22, 25,26,27,28]
+&amp;gt;&amp;gt;&amp;gt; for k, g in groupby(enumerate(data), lambda (i, x): i-x):
+...     print map(itemgetter(1), g)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;or, for &lt;a href="#note_for_python3"&gt;python3&lt;/a&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;gt;&amp;gt;&amp;gt; from itertools import groupby
+&amp;gt;&amp;gt;&amp;gt; from operator import itemgetter
+&amp;gt;&amp;gt;&amp;gt; data = [ 1, 4,5,6, 10, 15,16,17,18, 22, 25,26,27,28]
+&amp;gt;&amp;gt;&amp;gt; for k, g in groupby(enumerate(data), lambda x: x[1] - x[0]):
+...     print(list(map(itemgetter(1), g)))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;One of the comments was:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;I was about to upvote this answer because of how clever it is.
+ Unfortunately, it&amp;#39;s too clever for me to upvote without it having an
+ explanation of what the code is doing/how it works. &#x2013; mgilson Nov 24 &amp;#39;15 at
+ 16:52 &lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Rather than just dumping this into my tool, I thought I&amp;#39;d try to work out exactly why this whole bundle of gunk works.&lt;/p&gt;
+
+&lt;p&gt;It begins with the list- all integers.  For &lt;code&gt;groupby&lt;/code&gt; to work properly these
+need to be sorted.&lt;/p&gt;
+
+&lt;p&gt;First there&amp;#39;s the &lt;a href="https://docs.python.org/3/library/itertools.html#itertools.groupby"&gt;&lt;code&gt;groupby&lt;/code&gt;&lt;/a&gt; function:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Make an iterator that returns consecutive keys and groups from the iterable.
+The key is a function computing a key value for each element. If not
+specified or is None, key defaults to an identity function and returns the
+element unchanged. Generally, the iterable needs to already be sorted on the
+same key function.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;To make the list &amp;quot;group-able&amp;quot;, the &lt;code&gt;enumerate&lt;/code&gt; function is applied to the list,
+creating a list of tuples:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;In [47]: list(enumerate(data))
+Out[47]: 
+[(0, 1),
+ (1, 4),
+ (2, 5),
+ (3, 6),
+ (4, 10),
+ (5, 15),
+ ...
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The reason for creating an enumerate will become clear shortly.&lt;/p&gt;
+
+&lt;p&gt;We have an iterable to group- now we need to have a function to group the
+elements of this list.  In this case, we&amp;#39;ve got a lambda function that will,
+given a list or tuple, return the difference between the first and second
+elements.  Elements of the list which return the same value for this difference
+will be grouped together and returned as a list-within-a-list.&lt;/p&gt;
+
+&lt;p&gt;I struggled with this for some time.  I could not figure out for the life of me
+&lt;em&gt;how&lt;/em&gt; that difference would indicate that numbers in the list were consecutive.
+So, I walked it through by hand:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;gt;&amp;gt;&amp;gt; e = enumerate(data)
+&amp;gt;&amp;gt;&amp;gt; for t in list(e):
+       print(&amp;quot;{}: {}&amp;quot;.format(t[1]-t[0],t))
+       ....:     
+1: (0, 1)
+3: (1, 4)
+3: (2, 5)
+3: (3, 6)
+6: (4, 10)
+10: (5, 15)
+10: (6, 16)
+10: (7, 17)
+10: (8, 18)
+13: (9, 22)
+15: (10, 25)
+15: (11, 26)
+15: (12, 27)
+15: (13, 28)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;So here is where the author of that example was quite clever.  If a sequence of
+numbers is consecutive over some range in the list, the difference between any
+number in that sub-sequence and its position in the list will remain constant
+as the index and value will be increasing by the same amount (+1):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;10: (5, 15)  # 15 - 5 = 10
+10: (6, 16)  # 16 - 6 = 10
+10: (7, 17)  # 17 - 7 = 10
+10: (8, 18)  # 18 - 8 = 10
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Once that penny dropped, it became quite obvious (hashtag head-desk).  All that
+remains at that point is to extract the grouped lists.  The
+&lt;code&gt;list(map(itemgetter))&lt;/code&gt; extracts all of the grouped values from the group
+object and puts them into a list:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;gt;&amp;gt;&amp;gt; for k, g in groupby(enumerate(data), lambda x : x[1]-x[0]):
+        print(list(map(itemgetter(1), g)))
+        ....:     
+[1]
+[4, 5, 6]
+[10]
+[15, 16, 17, 18]
+[22]
+[25, 26, 27, 28]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id="toc_1"&gt;&lt;a name="note_for_python3"&gt;Changes for Python 3&lt;/a&gt;&lt;/h2&gt;
+
+&lt;ol&gt;
+&lt;li&gt; I can&amp;#39;t find the reference, but it seems that &lt;code&gt;map&lt;/code&gt; and some other
+functions that returned list objects in python2 now return iterators,
+necessitating coercing the iterator returned by &lt;code&gt;map()&lt;/code&gt; into a list for our
+purposes.&lt;/li&gt;
+&lt;li&gt; &lt;code&gt;print&lt;/code&gt; requires parenthesis!&lt;/li&gt;
+&lt;li&gt; &lt;code&gt;lambda&lt;/code&gt; has a different format&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+    </item>
   </channel>
 </rss>
