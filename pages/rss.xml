@@ -12,5 +12,13 @@
       <description>&lt;p&gt;Hello World&lt;/p&gt;
 </description>
     </item>
+    <item>
+      <title>Newpage</title>
+      <link>/pages/newpage</link>
+      <description>&lt;h1 id="toc_0"&gt;This is a new page&lt;/h1&gt;
+
+&lt;p&gt;Hopefully this shows up.&lt;/p&gt;
+</description>
+    </item>
   </channel>
 </rss>
