@@ -34,7 +34,7 @@ class Ruhoh
       # Add to deploy_branch
       return false unless checkout_deploy_branch
       system("git", "rm", "-rf", ".")
-      FileUtils.cp_r(File.join(ruhoh.paths.compiled, '.'), '.')
+      FileUtils.cp_r(File.join(ruhoh.config['compiled_path'], '.'), '.')
       `git add .` # system() doesn't work for some reason =/
 
       # Commit and push
@@ -45,15 +45,15 @@ class Ruhoh
 
     def compile
       ruhoh = Ruhoh.new
-      ruhoh.setup
+      #ruhoh.setup
       ruhoh.env = 'production'
-      ruhoh.setup_paths
+      #ruhoh.setup_paths
       ruhoh.setup_plugins
 
       config_overrides = set_configuration(ruhoh.config)
       ruhoh.config.merge!(config_overrides)
 
-      ruhoh.paths.compiled = File.join(Dir.tmpdir, 'compiled')
+      ruhoh.config['compiled_path'] = File.join(Dir.tmpdir, 'compiled')
       ruhoh.compile
       ruhoh
     end
